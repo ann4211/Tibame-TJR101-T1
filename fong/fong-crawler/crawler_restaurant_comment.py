@@ -37,7 +37,12 @@ def collect_comments(name,url,dir) :
     else :
         wait = WebDriverWait(driver,10,0.1)
     driver.find_element(By.XPATH,'//div[text()="評論"]').click()
-    page = driver.find_element(By.XPATH,"//div[@class='m6QErb DxyBCb kA9KIf dS8AEf XiKgde ']")
+    wait = WebDriverWait(driver, 3)
+    page = wait.until(
+        EC.presence_of_element_located(
+            (By.XPATH, "//div[contains(@class, 'm6QErb') and contains(@class, 'DxyBCb')]")
+        )
+    )
     driver.find_element(By.XPATH,"//span[text()='排序']").click()
     wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="action-menu"]/div[2]')))
     driver.find_element(By.XPATH, '//*[@id="action-menu"]/div[2]').click()
