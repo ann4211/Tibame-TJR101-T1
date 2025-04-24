@@ -7,10 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
-import time
-import csv
-import os
-import random
+import time, csv, os, random
 
 # 建立資料夾
 os.makedirs("Peter/Data", exist_ok=True)
@@ -44,38 +41,23 @@ print('-------------------------------------------------------------------------
 # 往下滑動直到看到「更多評論」按鈕並點擊它
 try:
     scrollable_div = driver.find_element(By.XPATH, '//div[contains(@class, "m6QErb DxyBCb kA9KIf dS8AEf XiKgde")]')
-    previous_height = 0
-    for _ in range(20):  # 最多嘗試 20 次
+    
+    for _ in range(10):  # 最多嘗試 10 次
         # 模擬人類行為，隨機延遲
-        time.sleep(random.uniform(2, 4))  # 隨機延遲 2 到 4 秒
-
-        # 滾動到頁面底部
-        driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", scrollable_div)
-        current_height = driver.execute_script("return arguments[0].scrollHeight", scrollable_div)
-
-        # 如果高度沒有變化，停止滾動
-        if current_height == previous_height:
-            print("已到達頁面底部，停止滾動")
-            break
-        previous_height = current_height
+        time.sleep(2)
 
         # 檢查是否已經找到「更多評論」按鈕
         try:
             more_reviews_button = driver.find_element(By.XPATH, "//span[contains(@class, 'wNNZR fontTitleSmall') and contains(text(), '更多評論')]")
-            if more_reviews_button.is_displayed():
-                print("已找到『更多評論』按鈕")
-                time.sleep(random.uniform(1, 2))  # 點擊前稍作隨機延遲
-                more_reviews_button.click()  # 點擊「更多評論」
+            if more_reviews_button.click():
+                print("成功點擊「更多評論」按鈕")
+                time.sleep(2)  # 等待頁面加載
                 break
         except Exception:
             print("未找到『更多評論』按鈕，繼續滾動...")
             continue
 except Exception as e:
     print("滑動頁面時發生錯誤:", e)
-
-# 停止幾秒鐘，讓使用者可以觀察結果
-print("等待 5 秒以觀察結果...")
-time.sleep(5)
 
 print('-----------------------------------------------------------------------------------------------------------------------')
 
@@ -145,22 +127,33 @@ seen_comments = set()
 
 for c in comments:
     try:
-        # 檢查是否有「全文」按鈕
-        full_text_button = c.find_element(By.XPATH, ".//button[@aria-label='顯示更多']")
-        if full_text_button:
-            # 點擊「全文」按鈕
-            ActionChains(driver).move_to_element(full_text_button).click().perform()
+        # 檢查是否有「全文」按鈕，如果有就點開
+        try:
+            full_text_button = c.find_element(By.XPATH, ".//button[@aria-label='顯示更多']")
+            if full_text_button.is_displayed():
+                ActionChains(driver).move_to_element(full_text_button).click().perform()
+                time.sleep(0.5)  # 等一下再抓全文
+        except:
+            pass  # 沒有顯示更多按鈕也沒關係
+
+        # 抓評論者名稱
+        author = c.find_element(By.XPATH, ".//div[contains(@class, 'd4r55')]").text
+
+        # 抓評論星等（透過 aria-label 裡的文字，例如「5顆星」）
+        rating_element = c.find_element(By.XPATH, ".//span[contains(@aria-label, '顆星')]")
+        rating = rating_element.get_attribute("aria-label")
+
         # 抓評論內容
         content = c.find_element(By.XPATH, ".//span[contains(@class, 'wiI7pd')]").text
 
         # 抓評論時間
         time_tag = c.find_element(By.XPATH, ".//span[contains(@class, 'rsqaWe')]").text
 
-        # 使用 (author, content) 作為唯一標識來檢查是否已經抓取過
+        # 去重複：作者 + 內容 作為唯一標記
         comment_key = (author, content)
         if comment_key not in seen_comments:
             seen_comments.add(comment_key)
-            # 整理成 dict
+            # 儲存評論資訊
             data.append({
                 "author": author,
                 "rating": rating,
@@ -170,6 +163,7 @@ for c in comments:
 
     except Exception as e:
         print("單一評論抓取錯誤:", e)
+
 
 # 儲存成 CSV
 with open("Peter/Data/士林夜市評論.csv", "w", encoding="utf-8", newline="") as f:
