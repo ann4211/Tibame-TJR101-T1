@@ -1,0 +1,20 @@
+[project]
+name = "tibame-tjr101-t1"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Peter",email = "liyanglin08@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pandas (>=2.2.3,<3.0.0)",
+    "nump (>=5.5.5.5,<6.0.0.0.0)",
+    "selenium (>=4.31.0,<5.0.0)",
+    "webdriver-manager (>=4.0.2,<5.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
