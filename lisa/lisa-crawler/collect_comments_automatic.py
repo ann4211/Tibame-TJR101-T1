@@ -2,12 +2,12 @@ from selenium.webdriver import Chrome
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import requests
-from bs4 import BeautifulSoup
+from selenium.common.exceptions import NoSuchElementException
 
+from bs4 import BeautifulSoup
 import pandas as pd
+
 import time
-from datetime import datetime
 from pathlib import Path
 
 def check_load_new_data(driver,class_):
@@ -32,7 +32,17 @@ def collect_comments_automatic(name,url,night_market):
     else :
         wait = WebDriverWait(driver,10,0.1)
     driver.find_element(By.XPATH,'//div[text()="評論"]').click()
-    page = driver.find_element(By.XPATH,"//div[@class='m6QErb DxyBCb kA9KIf dS8AEf XiKgde ']")
+
+    try:
+        page = driver.find_element(By.XPATH, "//div[@class='m6QErb DxyBCb kA9KIf dS8AEf XiKgde ']")
+    except NoSuchElementException:
+        try:
+            parent = driver.find_element(By.XPATH, "//div[@id='QA0Szd']")
+            page = parent.find_element(By.XPATH, './div/div/div[1]/div[2]/div/div[1]/div/div/div[2]')
+        except NoSuchElementException:
+            print(f"{name}無法取得，跳過此頁")
+            page = None
+
     driver.find_element(By.XPATH,"//span[text()='排序']").click()
     wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="action-menu"]/div[2]')))
     driver.find_element(By.XPATH, '//*[@id="action-menu"]/div[2]').click()
@@ -73,9 +83,9 @@ def collect_comments_automatic(name,url,night_market):
 
     df = pd.DataFrame({"留言者":traveler,"留言者身分":identity,"留言時間":times,"星級評等":stars,"評論內容":comments})
     df.insert(0,"餐廳名稱",name,allow_duplicates=True)
-    directory = Path(f"./data/store_comment/{night_market}")
+    directory = Path(f"./data/output/store_comment/{night_market}")
     directory.mkdir(parents=True,exist_ok=True)
-    path = Path(f"./data/output/store_comment/{night_market}/{night_market}_comments.csv")
+    path = Path(f"./data/output/store_comment/{night_market}/20250425_crawler_nanjichang_rawdata_{night_market}_comments.csv")
     if path.exists():
         df.to_csv(path,index=False,header=False,encoding='utf-8-sig',mode="a")
     else:
@@ -87,24 +97,23 @@ def collect_comments_automatic(name,url,night_market):
     driver.close()
 
 if __name__ == "__main__" :
-    night_market = "Dadong Night Market"
-    df = pd.read_csv(f"./data/output/store_list/{night_market}.csv")
-    
-    start = 2  #從第幾家開始蒐集評論
-    end = 3  #蒐集評論到第幾家
+    # "Dadong Night Market"
+    night_markets =["Tainan Flower Night Market" , "Wusheng Night Market"]
+    for night_market in night_markets:
+        df = pd.read_csv(f"./data/output/store_list_address/{night_market}_check2.csv")
 
-    count = 1
-    for name, url in zip(df.iloc[start:end, 0], df.iloc[start:end, 1]):
-        print(f"爬取第{start + count}家評價，尚餘{end - start - count}家待爬取")
-        try :
-            collect_comments_automatic(name,url,night_market)
-        except Exception as e:
-            print(f"爬取{name}時發生錯誤")
-            path = Path(f"./data/output/store_comment/exception/{night_market}.txt")
-            if not path.exists():
-                path.touch()
-            with open(path,"a",encoding='utf-8-sig') as f:
-                f.write(f"爬取{name}時發生錯誤\n{e}\n")
-                f.close()
-        time.sleep(1)
-        count += 1
+        count = 1
+        for name, url in zip(df.iloc[ : ,0], df.iloc[ : ,2]):
+            print(f"爬取{night_market}的第{count}家評價，尚餘{len(df) - count}家待爬取")
+            try :
+                collect_comments_automatic(name,url,night_market)
+            except Exception as e:
+                print(f"爬取{name}時發生錯誤")
+                path = Path(f"./data/output/store_comment/exception/")
+                path.mkdir(parents=True,exist_ok=True)
+                file = Path(f"./data/output/store_comment/exception/{night_market}.txt")
+                with open(file,"a",encoding='utf-8-sig') as f:
+                    f.write(f"爬取{name}時發生錯誤\n{e}\n")
+
+            time.sleep(1)
+            count += 1
