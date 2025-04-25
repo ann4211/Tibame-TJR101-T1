@@ -15,13 +15,13 @@ options = webdriver.ChromeOptions()
 options.add_argument("--start-maximized")
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
-with open("一中商圈攤位評論.csv", "w", encoding="utf-8-sig", newline='') as f:
+with open("ruifang_store_comments.csv", "w", encoding="utf-8-sig", newline='') as f:
     writer = csv.writer(f)
     writer.writerow(["店家名稱", "評分", "留言者名稱", "留言者身分", "留言時間", "評論內容"])
     print("標題寫入完成")
 
     # 讀取店家清單
-    df = pd.read_csv("一中店家清單.csv")
+    df = pd.read_csv("fong/fong-crawler/ruifang_store.csv")
     for name, link in zip(df['names'], df['links']):
         try:
             driver.get(link)
@@ -52,18 +52,19 @@ with open("一中商圈攤位評論.csv", "w", encoding="utf-8-sig", newline='')
             print("點擊排序按鈕失敗:", e)
 
         # 嘗試抓出所有選項文字，確認有「最新」
-        WebDriverWait(driver, 5, 0.1).until(
-            EC.presence_of_element_located((By.XPATH, '//*[@id="action-menu"]/div[2]'))
-        )
-        menu_items = driver.find_elements(By.XPATH, '//*[@id="action-menu"]//div[@role="menuitem"]')
-        for item in menu_items:
-            if "最新" in item.text:
-                driver.execute_script("arguments[0].scrollIntoView(true);", item)
-                driver.execute_script("arguments[0].click();", item)
-                print("成功點擊『最新』")
-                break
-            else:
-                print("❌ 沒有找到『最新』選項")
+        try:
+            WebDriverWait(driver, 5, 0.1).until(
+                EC.presence_of_element_located((By.XPATH, '//*[@id="action-menu"]/div[2]'))
+            )
+            menu_items = driver.find_elements(By.XPATH, '//*[@id="action-menu"]//div[@role="menuitem"]')
+            for item in menu_items:
+                if "最新" in item.text:
+                    driver.execute_script("arguments[0].scrollIntoView(true);", item)
+                    driver.execute_script("arguments[0].click();", item)
+                    print("成功點擊『最新』")
+                    break
+        except:
+            print("❌ 沒有找到『最新』選項")
     
 
         # 嘗試 JavaScript 強制點「最新」
@@ -90,7 +91,7 @@ with open("一中商圈攤位評論.csv", "w", encoding="utf-8-sig", newline='')
     # ✅ 滾動直到沒有新評論出現
         scroll_count = 0
         unchanged_count = 0
-        max_unchanged = 5  # 最多允許幾次沒有新增評論就結束
+        max_unchanged = 10  # 最多允許幾次沒有新增評論就結束
 
         while True:
             pre = len(driver.find_elements(By.CLASS_NAME, "jftiEf"))
@@ -105,6 +106,9 @@ with open("一中商圈攤位評論.csv", "w", encoding="utf-8-sig", newline='')
                 print(f"評論數未增加{unchanged_count}次")
                 if unchanged_count >= max_unchanged:
                     print(f"已顯示所有評論，共有{post}篇評論")
+                    break
+                if post >= 1000:
+                    print(f"評論數已達{post}則")
                     break
             else:
                 unchanged_count = 0
@@ -130,7 +134,7 @@ with open("一中商圈攤位評論.csv", "w", encoding="utf-8-sig", newline='')
                 identity = review.find_element(By.CLASS_NAME, "RfnDt").text
             except:
                 identity = ''
-                print("抓取使用者身分錯誤")
+                print("無使用者身分")
             
             try:
                 rating = review.find_element(By.CLASS_NAME, "kvMYJc").get_attribute("aria-label")
@@ -164,4 +168,4 @@ with open("一中商圈攤位評論.csv", "w", encoding="utf-8-sig", newline='')
         print(f"攤位{name}的評論已收集")
 
 driver.quit()
-print("\n✅ 所有評論已成功寫入 一中商圈攤位評論.csv！")
+print("\n✅ 所有評論已成功寫入 ruifang_store_comments！")
