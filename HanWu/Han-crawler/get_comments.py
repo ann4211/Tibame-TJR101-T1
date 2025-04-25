@@ -17,7 +17,7 @@ def check_load_new_data(driver,class_):
     soup = BeautifulSoup(req,'html.parser')
     return len(soup.find_all("div",class_=class_))
 
-def collect_comments(name,url,dir) :
+def collect_comments(name,url,output_dir,date_dir_name) :
     service = Service("C:\PythonLanguage\chromedriver-win64\chromedriver.exe")
     options = ChromeOptions()
     driver = Chrome(options = options,service = service)
@@ -48,7 +48,7 @@ def collect_comments(name,url,dir) :
     while True :
         driver.execute_script("arguments[0].scrollTo(0,arguments[0].scrollHeight)",page)
         try :
-            wait.until(lambda _: pre_count < check_load_new_data(driver,"jftiEf fontBodyMedium"))  # 修正了語法錯誤
+            wait.until(lambda _: pre_count < check_load_new_data(driver,"jftiEf fontBodyMedium"))
         except :
             print("已完成所有評論搜尋")
             break
@@ -74,23 +74,19 @@ def collect_comments(name,url,dir) :
         pre_count = check_load_new_data(driver,"jftiEf fontBodyMedium")
     df = pd.DataFrame({"留言者":traveler,"留言者身分":identity,"留言時間":times,"星級評等":stars,"評論內容":comments})
     df.insert(0,"餐廳名稱",name,allow_duplicates=True)
-    data_dir = "data"
-    if not os.path.exists(data_dir):
-        os.makedirs(data_dir)
-    
-    directory = os.path.join(data_dir, dir)
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-    
-    filepath = os.path.join(directory, f"{dir}_comments.csv")
-    
+
+    directory = os.path.join(output_dir, date_dir_name)
+    os.makedirs(directory, exist_ok=True)  # 使用 exist_ok=True 避免重複創建資料夾的錯誤
+
+    filepath = os.path.join(directory, f"{date_dir_name}_comments.csv")
+
     if os.path.exists(filepath):
         df.to_csv(filepath, index=False, header=False, encoding='utf-8-sig', mode="a")
     else:
         df.to_csv(filepath, index=False, header=True, encoding='utf-8-sig', mode="a")
-    
+
     df.info()
-    
+
     print(f"評論已保存到: {filepath}")
     time.sleep(2)
     driver.close()
@@ -98,42 +94,47 @@ def collect_comments(name,url,dir) :
 def main():
     # 使用絕對路徑讀取餐廳CSV檔案
     csv_path = r"C:\tibame-t1\HanWu\Han-crawler\restaurants_list.csv"
-    
+
     try:
         restaurants_df = pd.read_csv(csv_path)
         print(f"成功讀取餐廳數據，共 {len(restaurants_df)} 條記錄")
     except Exception as e:
         print(f"讀取餐廳CSV檔案失敗: {e}")
         return
-    
+
     # 檢查CSV是否包含必要的列
     if '餐廳名稱' not in restaurants_df.columns or '餐廳連結' not in restaurants_df.columns:
         print("CSV檔案缺少必要的列: '餐廳名稱' 或 '餐廳連結'")
         print(f"CSV檔案現有的列: {list(restaurants_df.columns)}")
         return
-    
+
+    # 獲取包含 CSV 檔案的目錄
+    csv_dir = os.path.dirname(os.path.abspath(csv_path))
     # 設置資料夾名稱
-    dir_name = datetime.now().strftime("%Y%m%d")
-    
+    date_dir_name = datetime.now().strftime("%Y%m%d")
+    # 設置輸出資料夾的完整路徑
+    output_data_dir = os.path.join(csv_dir, "data")
+    # 創建主要的 data 資料夾（如果不存在）
+    os.makedirs(output_data_dir, exist_ok=True)
+
     # 遍歷每個餐廳並爬取評論
     for idx, row in restaurants_df.iterrows():
         name = row['餐廳名稱']
         url = row['餐廳連結']
-        
+
         print(f"開始處理第 {idx+1}/{len(restaurants_df)} 個餐廳: {name}")
-        
+
         try:
-            collect_comments(name, url, dir_name)
+            collect_comments(name, url, output_data_dir, date_dir_name)
             print(f"完成第 {idx+1}/{len(restaurants_df)} 個餐廳的爬取")
         except Exception as e:
             print(f"爬取餐廳 '{name}' 時發生錯誤: {e}")
             continue
-        
+
         # 適當延遲，避免被封IP
         time.sleep(3)
-    
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    result_path = os.path.join(current_dir, "data", dir_name, f"{dir_name}_comments.csv")
+
+    result_path = os.path.join(output_data_dir, date_dir_name, f"{date_dir_name}_comments.csv")
     print("所有餐廳評論爬取完成！")
     print(f"結果已保存到: {result_path}")
 
