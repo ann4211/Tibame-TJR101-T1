@@ -5,30 +5,33 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
-from selenium.common.exceptions import NoSuchElementException
 from webdriver_manager.chrome import ChromeDriverManager
 import pandas as pd
 import random
 
 # ✅ 啟動瀏覽器
 options = webdriver.ChromeOptions()
-options.add_argument("--start-maximized")
+options.binary_location = "/usr/bin/google-chrome"  # 加這行
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
+options.add_argument("--headless")  # 如果你是跑在 server/container，通常要加這個
+
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
 with open("ruifang_store_comments.csv", "w", encoding="utf-8-sig", newline='') as f:
     writer = csv.writer(f)
-    writer.writerow(["店家名稱", "評分", "留言者名稱", "留言者身分", "留言時間", "評論內容"])
+    writer.writerow(["店家名稱", "評分", "留言者名稱", "留言者身分", "留言時間", "評論內容", "使用者ID"])
     print("標題寫入完成")
 
     # 讀取店家清單
-    df = pd.read_csv("fong/fong-crawler/ruifang_store.csv")
+    df = pd.read_csv("/workspaces/Tibame-TJR101-T1/fong/fong-crawler/csv/ruifang_store.csv")
     for name, link in zip(df['names'], df['links']):
         try:
             driver.get(link)
             wait = WebDriverWait(driver,10,0.1)
             print(f"進入攤位{name}")
-        except:
-            print("門沒開，進不去")
+        except Exception as e:
+            print("門沒開，進不去", e)
 
     # ▶️ 點擊「更多評論」
         try:
@@ -63,8 +66,8 @@ with open("ruifang_store_comments.csv", "w", encoding="utf-8-sig", newline='') a
                     driver.execute_script("arguments[0].click();", item)
                     print("成功點擊『最新』")
                     break
-        except:
-            print("❌ 沒有找到『最新』選項")
+        except Exception as e:
+            print("❌ 沒有找到『最新』選項", e)
     
 
         # 嘗試 JavaScript 強制點「最新」
@@ -126,42 +129,49 @@ with open("ruifang_store_comments.csv", "w", encoding="utf-8-sig", newline='') a
         for review in reviews:
             try:
                 author = review.find_element(By.CLASS_NAME, "d4r55").text
-            except:
+            except Exception as e:
                 author = ''
-                print("抓取使用者名稱錯誤")
+                print(f"抓取使用者名稱錯誤，{e}")
+
+            try:
+                number = review.find_element(By.CLASS_NAME, "al6Kxe").get_attribute("data-href")
+            except Exception as e:
+                number = ''
+                print(f"無使用者ID，{e}")
 
             try:
                 identity = review.find_element(By.CLASS_NAME, "RfnDt").text
-            except:
+            except Exception as e:
                 identity = ''
-                print("無使用者身分")
+                print(f"無使用者身分，{e}")
             
             try:
                 rating = review.find_element(By.CLASS_NAME, "kvMYJc").get_attribute("aria-label")
-            except:
+            except Exception as e:
                 rating = ''
-                print("抓取評分錯誤")
+                print(f"抓取評分錯誤，{e}")
             try:
                 time_text = review.find_element(By.CLASS_NAME, "rsqaWe").text
-            except:
+            except Exception as e:
                 time_text = ''
-                print("抓取時間錯誤")    
-            try:    
-                comment_el = review.find_element(By.CLASS_NAME, "wiI7pd")
+                print(f"抓取時間錯誤，{e}")
+            try:
+                id = review.find_element(By.CLASS_NAME,"MyEned").get_attribute("id")
+                comment_el = driver.find_element(By.XPATH, f"//*[@id='{id}']/span[1]")
                 try:
                     # ▶️ 點擊「顯示完整內容」的按鈕
-                    button = comment_el.find_element(By.CSS_SELECTOR, "button.w8nwRe.kyuRq")
-                    driver.execute_script("arguments[0].click()", button)
+                    driver.find_element(By.XPATH, f"//*[@id='{id}']/span[2]/button").click()
                     time.sleep(0.5)
                     print("點擊全文按鈕")
-                except:
+                except Exception as e:
+                    print(e)
                     pass
                 comment = comment_el.text
-            except:
+            except Exception as e:
                 comment = ''
-                print(f"第{count+1}筆評論無內文")
+                print(f"第{count+1}筆評論無內文，{e}")
             
-            writer.writerow([name, rating, author, identity, time_text, comment])
+            writer.writerow([name, rating, author, identity, time_text, comment, number])
             count += 1
             print(f"寫入第{count}筆評論")
 
