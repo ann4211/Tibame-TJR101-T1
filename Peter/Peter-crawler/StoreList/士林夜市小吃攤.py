@@ -6,6 +6,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import time, csv
 
+
 # 啟動瀏覽器
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
 
