@@ -1,24 +1,23 @@
 import pandas as pd
 from selenium.webdriver import Chrome
-
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
-
 from bs4 import BeautifulSoup
 import time
+from random import uniform
 
 def check_load_new_data(driver,class_):
     req = driver.page_source
     soup = BeautifulSoup(req,'html.parser')
     return len(soup.find_all("div",class_=class_))
 
-def nightmarket_store_links(night_market):
+def nightmarket_store_links(night_market, chinese_name):
     driver = Chrome()
 
     df = pd.read_csv(f"./data/input/{night_market}.csv")
-    driver.get("https://www.google.com/maps/search/")
+    driver.get(f"https://www.google.com/maps/search/{chinese_name}")
 
     names = list()
     links = list()
@@ -31,7 +30,7 @@ def nightmarket_store_links(night_market):
                 EC.presence_of_element_located((By.ID, "searchboxinput"))
             )
             search_box.clear()
-            search_box.send_keys(store)
+            search_box.send_keys(chinese_name + store)
             search_box.send_keys(Keys.RETURN)
 
             WebDriverWait(driver, 10).until(
@@ -54,12 +53,14 @@ def nightmarket_store_links(night_market):
                         names.append(info.get('aria-label', '無名稱'))
                         links.append(info.get('href', '無連結'))
                 time.sleep(2)
-            else :
+
+            else:
                 # 只有一筆資料，直接取得當前頁面的 URL
                 time.sleep(2)
-                current_url = driver.current_url
-                names.append(store) 
-                links.append(current_url)
+                name = driver.find_element(By.XPATH, '//h1[@class="DUwDvf lfPIob"]').text
+                link = driver.current_url
+                names.append(name)
+                links.append(link)
 
         except Exception as e:
             print(f"Error while processing store {store}: {e}")
@@ -72,10 +73,11 @@ def nightmarket_store_links(night_market):
     time.sleep(2)
     driver.close()
 
-if __name__ == "__main__" :
-    night_markets =["Dadong Night Market" , "Tainan Flower Night Market" , "Wusheng Night Market"]
-    for night_market in night_markets:
-        nightmarket_store_links(night_market)
-
-
-
+if __name__ == "__main__":
+    night_markets = {
+        "Dadong Night Market": "大東夜市",
+        "Tainan Flower Night Market": "台南花園夜市",
+        "Wusheng Night Market": "武聖夜市"
+    }
+    for night_market, chinese_name in night_markets.items():
+        nightmarket_store_links(night_market, chinese_name)

@@ -52,6 +52,7 @@ def collect_comments_automatic(name,url,night_market):
     times = list()
     stars = list()
     comments = list()
+    traveler_ID = list()
     pre_count = 0
     while True :
         driver.execute_script("arguments[0].scrollTo(0,arguments[0].scrollHeight)",page)
@@ -63,6 +64,9 @@ def collect_comments_automatic(name,url,night_market):
         customers = driver.find_elements(By.CLASS_NAME,"jJc9Ad ")
         for customer in customers[pre_count:] :
             traveler.append(customer.find_element(By.CLASS_NAME,"d4r55 ").text)
+            traveler_class = customer.find_elements(By.CLASS_NAME, "al6Kxe")
+            for traveler_herf in traveler_class:
+                traveler_ID.append(traveler_herf.get_attribute("data-href"))
             try:
                 identity.append(customer.find_element(By.CLASS_NAME,"RfnDt ").text)
             except:
@@ -81,11 +85,11 @@ def collect_comments_automatic(name,url,night_market):
                 comments.append("")
         pre_count = check_load_new_data(driver,"jftiEf fontBodyMedium")
 
-    df = pd.DataFrame({"留言者":traveler,"留言者身分":identity,"留言時間":times,"星級評等":stars,"評論內容":comments})
+    df = pd.DataFrame({"留言者":traveler,"留言者身分":identity,"留言時間":times,"星級評等":stars,"評論內容":comments,"留言者ID":traveler_ID})
     df.insert(0,"餐廳名稱",name,allow_duplicates=True)
-    directory = Path(f"./data/output/store_comment/{night_market}")
+    directory = Path(f"./data/output/store_comment/")
     directory.mkdir(parents=True,exist_ok=True)
-    path = Path(f"./data/output/store_comment/{night_market}/20250425_crawler_nanjichang_rawdata_{night_market}_comments.csv")
+    path = Path(f"./data/output/store_comment/{night_market}_comments.csv")
     if path.exists():
         df.to_csv(path,index=False,header=False,encoding='utf-8-sig',mode="a")
     else:
@@ -94,16 +98,16 @@ def collect_comments_automatic(name,url,night_market):
     
     time.sleep(2)
 
-    driver.close()
+    driver.quit()
 
 if __name__ == "__main__" :
-    # "Dadong Night Market"
-    night_markets =["Tainan Flower Night Market" , "Wusheng Night Market"]
+    # , "Tainan Flower Night Market" , "Wusheng Night Market"
+    night_markets =["Dadong Night Market"]
     for night_market in night_markets:
-        df = pd.read_csv(f"./data/output/store_list_address/{night_market}_check2.csv")
+        df = pd.read_csv(f"./data/output/store_list_address/{night_market}_check_v2.csv")
 
         count = 1
-        for name, url in zip(df.iloc[ : ,0], df.iloc[ : ,2]):
+        for name, url in zip(df.iloc[ : ,1], df.iloc[ : ,3]):
             print(f"爬取{night_market}的第{count}家評價，尚餘{len(df) - count}家待爬取")
             try :
                 collect_comments_automatic(name,url,night_market)

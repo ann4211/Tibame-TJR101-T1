@@ -5,15 +5,17 @@ import time
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 
-def store_address_check(night_market , address_key):
+def store_address_check(night_market , address_keys):
     print(f"正在處理：{night_market}")
     df = pd.read_csv(f"./data/output/store_list/{night_market}.csv")
 
     store_information = []
+    review_store = set()
 
     for index, row in df.iterrows():
         store = row["餐廳名稱"]
         link = row["餐廳連結"]
+
         store_address_1 = ""
         store_address_2 = ""
 
@@ -27,43 +29,56 @@ def store_address_check(night_market , address_key):
                 store_address_1 = driver.find_element(By.CLASS_NAME, "CsEnBe").get_attribute("aria-label")
                 store_address_1 = store_address_1.replace("地址：", "").replace("地址:", "").strip()
 
-                if any(keyword in store_address_1 for keyword in address_key):
+                if any(keyword in store_address_1 for keyword in address_keys):
                     print(f"{store} 是 {night_market} 店家")
-                    store_information.append({
-                        "餐廳名稱": store,
-                        "餐廳地址": store_address_1,
-                        "餐廳連結": link
-                    })
-                    driver.quit()
-                    continue
-
+                    if (store , store_address_1) not in review_store:
+                        review_store.add((store , store_address_1))
+                        store_information.append({
+                            "夜市名稱": address_keys[2],
+                            "餐廳名稱": store,
+                            "餐廳地址": store_address_1,
+                            "餐廳連結": link
+                        })
+                        continue
+                    else:
+                        print(f"{store}重複，不存取資料")
+                        continue
+                        
             except Exception as e:
                 print(f"抓取{store}地址失敗原因：\n{e}")
+
+            finally:
+                time.sleep(2)
 
             # 用所在位置來比對
             try:
                 store_address_2 = driver.find_element(By.XPATH, '//div[contains(text(),"所在地點")]').text
-                if any(keyword in store_address_2 for keyword in address_key):
+                if any(keyword in store_address_2 for keyword in address_keys):
                     print(f"{store} 是 {night_market} 店家")
-                    store_information.append({
-                        "餐廳名稱": store,
-                        "餐廳地址": store_address_1, 
-                        "餐廳連結": link
-                    })
+                    if (store , store_address_1) not in review_store:
+                        review_store.add((store , store_address_1))
+                        store_information.append({
+                            "夜市名稱": address_keys[2],
+                            "餐廳名稱": store,
+                            "餐廳地址": store_address_1,
+                            "餐廳連結": link
+                        })
                 else:
                     print(f"{store} 不是 {night_market} 店家")
             
             except NoSuchElementException:
-                print(f"{store}沒有所在地")
+                print(f"{store}不是{night_market}所在地")
             
             except Exception as e:
                 print(f"抓取{store}失敗原因：\n{e}")
 
-            driver.quit()
-            time.sleep(2)
+            finally:
+                time.sleep(2)
 
         except Exception as e:
             print(f"抓取{store}有問題：\n{e}")
+        
+        finally:
             driver.quit()
 
     # 寫入資料
@@ -79,8 +94,5 @@ if __name__ == "__main__" :
         "Wusheng Night Market": ["台南市中西區", "武聖路", "武聖夜市"]
         }
 
-    night_markets = nightmarket_address.keys()
-    address_keys = list(nightmarket_address.values())
-
-    for night_market , address_key in zip(night_markets , address_keys):
-        store_address_check(night_market , address_key)
+    for night_market, address_keys in nightmarket_address.items():
+        store_address_check(night_market, address_keys)
