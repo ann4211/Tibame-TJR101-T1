@@ -23,6 +23,9 @@ RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | gpg --dearm
 # 清理 /tmp 目錄
 RUN rm -rf /tmp/*
 
+# 安裝 dos2unix 工具
+RUN apt-get update && apt-get install -y dos2unix
+
 # 安裝 poetry
 RUN pip install poetry
 
@@ -40,6 +43,9 @@ COPY start.sh /app/start.sh
 
 # 確保啟動腳本有執行權限
 RUN chmod +x /app/start.sh
+
+# 修正 start.sh 的換行符號
+RUN dos2unix /app/start.sh
 
 # 使用啟動腳本
 CMD ["bash", "/app/start.sh"]
