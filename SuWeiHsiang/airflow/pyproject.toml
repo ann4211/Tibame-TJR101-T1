@@ -1,0 +1,21 @@
+[project]
+name = "tibame-tjr101-t1-airflow"
+version = "0.1.0"
+description = "TJR101-T1-airflow-python-packages"
+authors = [
+    {name = "TJR101-T1"}
+]
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "selenium (>=4.31.0,<5.0.0)",
+    "webdriver-manager (>=4.0.2,<5.0.0)",
+    "pandas (>=2.2.3,<3.0.0)",
+    "requests (>=2.32.3,<3.0.0)",
+    "beautifulsoup4 (>=4.13.4,<5.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
