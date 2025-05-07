@@ -1,6 +1,12 @@
-FROM apache/airflow:2.10.5
+FROM apache/airflow:2.10.5-python3.12
 
 USER root
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+         vim \
+  && apt-get autoremove -yqq --purge \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update && apt-get install -y \
 wget gnupg2 curl unzip fonts-liberation libappindicator3-1 libasound2 libatk-bridge2.0-0 \
