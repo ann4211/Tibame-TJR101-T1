@@ -1,5 +1,4 @@
 import pandas as pd
-import time
 
 from utils.collect_one import one_restaurant_comments
 from utils.save_error import save_error_info
@@ -18,10 +17,6 @@ def get_batch_store(stores,batch_num,batch_size):
     end   = start + batch_size
     return stores[start:end]
 
-def create_group(batch_num,store):
-    with TaskGroup(group_id=f"collect_comments_group_{batch_num}") as group:
-        all_restaurants_comments.expand(store=store)
-
 @task
 def all_restaurants_comments(store):
     name = store["st_name"]
@@ -31,3 +26,7 @@ def all_restaurants_comments(store):
         one_restaurant_comments(name,link)
     except Exception as e:
         save_error_info(name,e)
+
+def create_group(batch_num,store):
+    with TaskGroup(group_id=f"collect_comments_group_{batch_num}") as group:
+        all_restaurants_comments.expand(store=store)

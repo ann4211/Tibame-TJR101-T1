@@ -28,9 +28,10 @@ default_args = {
 def d_gossiping_crawler():
     @task
     def get_gossiping_article():
-        web = requests.get('https://www.ptt.cc/bbs/Gossiping/index.html', cookies={'over18':'1'})
+        #web = requests.get('https://www.ptt.cc/bbs/Gossiping/index.html', cookies={'over18':'1'})
+        web = requests.get('https://ptt-discussion.tw/', cookies={'over18':'1'})
         soup = BeautifulSoup(web.text, "html.parser")
-        title = soup.find_all('div', class_='title')[-6]
+        title = soup.find_all('div', class_='title')[-4]
 
         with open("./data/gossiping.txt",mode="a",encoding="utf-8-sig") as f:
             f.write(title.text.lstrip("\n"))

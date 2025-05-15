@@ -21,12 +21,12 @@ def photo_count(x):
     match = re.search(r"\d*",x).group()
     return int(match) if match else 0
 
-def unit_to_month(x):
-    if   "天" in x : return 1 / 30
-    elif "週" in x : return 0.25
-    elif "月" in x : return 1.5
-    elif "年" in x : return 18
-    else           : return 0
+def t_get_month_ago(df):
+    if   df["time_unit"] == "天"   : return int(df["time_num"]) / 30
+    elif df["time_unit"] == "週"   : return int(df["time_num"]) / 4
+    elif df["time_unit"] == "個月" : return int(df["time_num"]) + 0.5
+    elif df["time_unit"] == "年"   : return int(df["time_num"]) * 12 + 6
+    else                           : return 0
 
 def clear_special_char(x):
     if pd.isna(x):
