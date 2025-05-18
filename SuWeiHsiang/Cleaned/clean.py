@@ -193,7 +193,7 @@ def t_get_time(df: DataFrame) -> DataFrame:
     換算評論時間為以月為單位之月數
     """
 
-    def unit_to_month(df: DataFrame) -> int:
+    def unit_to_month(df: DataFrame) -> float:
         """
         評論時間在一天內計為0個月，一天計為1/30個月，一週計為1/4個月，一個月計為1.5個月(兩個月計為2.5個月以此類推)，一年計為18個月(兩年計為30個月以此類推)
         """
@@ -230,12 +230,12 @@ def t_clean_comment(df: DataFrame) -> DataFrame:
 
     def clear_special_char(x: str) -> Optional[str]:
         """
-        清除跳脫字元
+        清除換行符號及空格符號
         """
         if pd.isna(x):
             return
         else:
-            return re.sub(r"[\n\r]", " ", x)
+            return re.sub(r"[\n\r\t]", " ", x)
 
     df["comment"] = df["comment"].apply(clear_special_char)
     df.rename(columns={"comment": "content_clean"}, inplace=True)
