@@ -110,8 +110,8 @@ def get_city_address(x: str) -> Tuple[str, str]:
         return city, x[second_ad_idx + 1 :]
     else:  # 地址從號寫到巷弄再到街道路段再到鄉鎮市區及縣市及國家(為外國人慣用之地址書寫方式)
         if (
-            "太麻里鄉" in x or "那瑪夏區" in x
-        ):  # 太麻里鄉及那瑪夏區為台灣名稱有三個字的鄉鎮市區，其餘名稱皆為兩個字
+            "太麻里鄉" in x or "那瑪夏區" in x or "三地門鄉" in x or "阿里山鄉" in x
+        ):  # 以上鄉鎮市區為台灣名稱有三個字的鄉鎮市區，其餘名稱皆為兩個字
             return city, x[: second_ad_idx - 3]
         else:
             if second_ad_idx > -1:
