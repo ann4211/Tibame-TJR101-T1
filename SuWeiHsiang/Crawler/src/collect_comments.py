@@ -101,7 +101,7 @@ def sort_newest(driver: Chrome, wait: WebDriverWait) -> None:
     driver.find_element(By.XPATH, '//*[@id="action-menu"]/div[2]').click()
 
 
-def split_time_to_num_and_unit(customer: WebElement) -> (int, str):
+def split_time_to_num_and_unit(customer: WebElement) -> Tuple[int, str]:
     """
     將評論時間拆分為時間值與時間單位
     """
@@ -126,7 +126,7 @@ def comment_info(
     info_list[1].append(tid)
     try:
         info_list[2].append(customer.find_element(By.CLASS_NAME, "RfnDt ").text)
-    except:
+    except Exception:
         info_list[2].append("")
     info_list[3].append(
         customer.find_element(By.CLASS_NAME, "kvMYJc").get_attribute("aria-label")
@@ -137,11 +137,11 @@ def comment_info(
         id = customer.find_element(By.CLASS_NAME, "MyEned").get_attribute("id")
         try:
             driver.find_element(By.XPATH, f"//*[@id='{id}']/span[2]/button").click()
-        except:
+        except Exception:
             pass
         comment = driver.find_element(By.XPATH, f"//*[@id='{id}']/span[1]")
         info_list[6].append(comment.text)
-    except:
+    except Exception:
         info_list[6].append("")
     return info_list  # list依序為評論者姓名、評論者ID、在地嚮導標籤、評論星等、評論時間值、評論時間單位、評論內容
 
@@ -253,7 +253,7 @@ def collect_comments(name: str, url: str, dir: str) -> None:
                 lambda _: pre_count
                 < check_load_new_data(driver, "jftiEf fontBodyMedium")
             )  # 等待滑動頁面後是否有新評論載入
-        except:
+        except Exception:
             print(
                 f"已完成{name}評論搜尋"
             )  # 若滑動前後評論總數相同則視為已爬取所有評論完畢

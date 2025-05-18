@@ -4,8 +4,6 @@ import time
 from pathlib import Path
 from random import uniform
 from typing import Optional, Tuple, List
-from builtins import BaseException
-
 
 import pandas as pd
 from pandas import DataFrame
@@ -116,7 +114,7 @@ def put_abs_locate_to_list(driver: Chrome, latitudes: float, longitudes: float) 
     將經緯度放入list
     """
     curr_url = check_abs_locate_stab(driver, 10)
-    if curr_url != None:
+    if curr_url is not None:
         lati_pattern = r"\d{2}\.\d+"
         long_pattern = r"\d{3}\.\d+"
         latitude = re.search(lati_pattern, curr_url).group()
@@ -154,7 +152,7 @@ def restaurant_info(driver: Chrome, info_list: List[List[str]]) -> None:
             .get_attribute("aria-label")
             .lstrip("地址: ")
         )
-    except:
+    except Exception:
         info_list[0].append("")
     try:
         info_list[1].append(
@@ -162,7 +160,7 @@ def restaurant_info(driver: Chrome, info_list: List[List[str]]) -> None:
             .get_attribute("aria-label")
             .rstrip(" 顆星")
         )
-    except:
+    except Exception:
         info_list[1].append("")
     try:
         info_list[2].append(
@@ -171,7 +169,7 @@ def restaurant_info(driver: Chrome, info_list: List[List[str]]) -> None:
             .rstrip(")")
             .replace(",", "")
         )
-    except:
+    except Exception:
         info_list[2].append("")
     try:
         info_list[3].append(
@@ -179,7 +177,7 @@ def restaurant_info(driver: Chrome, info_list: List[List[str]]) -> None:
                 By.XPATH, "//span[@class='mgr77e']/span/span[2]/span/span"
             ).text
         )
-    except:
+    except Exception:
         info_list[3].append("")
     try:
         tag_lst = driver.find_elements(
@@ -188,7 +186,7 @@ def restaurant_info(driver: Chrome, info_list: List[List[str]]) -> None:
         info_list[4].append(
             [tag.get_attribute("aria-label").split("提到")[1] for tag in tag_lst]
         )
-    except:
+    except Exception:
         info_list[4].append("")
 
 
@@ -225,7 +223,7 @@ def collect_links(district: str, typename: str, dir: str) -> None:
     while True:
         req = driver.page_source
         soup = BeautifulSoup(req, "html.parser")
-        if soup.select_one("span.HlvSq") == None:  # 尚未獲得所有店家
+        if soup.select_one("span.HlvSq") is None:  # 尚未獲得所有店家
             driver.execute_script(
                 "arguments[0].scrollTo(0,arguments[0].scrollHeight)", page
             )
@@ -283,7 +281,7 @@ def with_dist(
             distance.append(
                 get_distance((abs_locate), (target_latitude, target_longitude))
             )
-        except:
+        except Exception:
             distance.append(10000)
     df["distance"] = distance
     path = Path(f"{crawler_path}/data/{dir}")
