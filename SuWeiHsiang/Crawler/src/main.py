@@ -17,8 +17,8 @@ if __name__ == "__main__":
     nm_name_ch = "寧夏夜市"  # 店家的中文名稱(作為Google地圖搜尋關鍵字)
     typename = "小吃"  # 店家的類型(如小吃、餐廳等等)
     nm_name = "NingXia"  # 店家的英文名稱(為了創建檔案存取資料夾用)
-    target_latitude = 25.0566856  # 店家的緯度
-    target_longitude = 121.5127892  # 店家的經度
+    target_latitude = 25.055534  # 店家的緯度
+    target_longitude = 121.515107  # 店家的經度
     distance = 0.4  # 店家與夜市的距離(方圓幾公里內的店家才可以算是在夜市裡)
     collect_links(nm_name_ch, typename, nm_name)
     get_abs_locate(
@@ -43,7 +43,7 @@ if __name__ == "__main__":
     )
     # 爬取餐廳評論爬取餐廳評論之參數請設定
     start = 0  # 要從第幾家開始蒐集評論(目前到樂華夜市第100家)
-    end = 159  # 要從蒐集評論到第幾家
+    end = 1  # 要從蒐集評論到第幾家
     collect_comments_by_range(nm_name, start, end)
 
     # 需要補爬評論之餐廳名單
