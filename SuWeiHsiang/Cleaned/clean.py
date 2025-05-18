@@ -7,7 +7,7 @@ from pandas import DataFrame
 from dotenv import load_dotenv
 
 load_dotenv()
-data_path = os.getenv("DATA_PATH")
+crawler_path = os.getenv("CRAWLER_PATH")
 clean_path = os.getenv("CLEANED_PATH")
 
 
@@ -36,7 +36,7 @@ def e_load_raw_data(dir: str, typename: str) -> DataFrame:
     """
     取出資料
     """
-    path = f"{data_path}/{dir}/{dir}_{typename}.csv"
+    path = f"{crawler_path}/data/{dir}/{dir}_{typename}.csv"
     df = pd.read_csv(path)
     return df
 
@@ -125,7 +125,7 @@ def t_clean_address(df: DataFrame) -> DataFrame:
     清理地址資料，插入所在縣市之欄位，並去除地址之第一二級行政區
     """
     df.insert(1, "nm_city", "")
-    df[["nm_city", "地址"]] = df["地址"].apply(get_city_address).apply(pd.Series)
+    df[["nm_city", "st_address"]] = df["st_address"].apply(get_city_address).apply(pd.Series)
     return df
 
 

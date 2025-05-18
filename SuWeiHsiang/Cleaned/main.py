@@ -14,8 +14,8 @@ from clean import (
     l_save_data_to_csv,
 )
 
-nm_name = "NingXia"
-nm_name_ch = "寧夏夜市"
+nm_name = "LiaoNing"
+nm_name_ch = "遼寧街夜市"
 
 df_store = e_load_raw_data(nm_name, "restaurant")
 df_store = t_clean_address(df_store)
