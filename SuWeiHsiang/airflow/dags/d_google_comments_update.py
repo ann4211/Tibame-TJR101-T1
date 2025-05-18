@@ -20,7 +20,7 @@ default_args = {
     schedule_interval="0 1 * * *",
     start_date=datetime(2025,5,3),
     catchup=False,
-    tags=["update comments from all restaurant"]
+    tags=["Step 1 : update comments from all restaurant"]
 )
 
 def d_google_comments_update():

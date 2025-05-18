@@ -33,6 +33,7 @@ default_args = {
     schedule_interval="0 9 * * *",
     start_date=datetime(2025, 5, 3),
     catchup=False,
+    tags=["Step 2 : Data Cleaning"]
 )
 def d_cleaned_comments():
     df = e_load_raw_data()
