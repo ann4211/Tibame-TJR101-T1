@@ -13,7 +13,7 @@ default_args = {
 }
 
 @dag(
-    dag_id="d_google_comments_update",
+    dag_id="d_01_google_comments_update",
     default_args=default_args,
     description="get new google map restaurants comment daily",
     max_active_tasks=3,
@@ -23,7 +23,7 @@ default_args = {
     tags=["Step 1 : update comments from all restaurant"]
 )
 
-def d_google_comments_update():
+def d_01_google_comments_update():
     
     restaurants = get_restaurants_info()
     batch1 = get_batch_restaurant.override(task_id="get_batch_0")(restaurants,0,1000)
@@ -31,4 +31,4 @@ def d_google_comments_update():
     create_group(1,batch1)
     create_group(2,batch2)
         
-d_google_comments_update()
+d_01_google_comments_update()

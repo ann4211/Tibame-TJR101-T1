@@ -27,15 +27,15 @@ default_args = {
 
 
 @dag(
-    dag_id="d_cleaned_comments",
+    dag_id="d_02_cleaned_comments",
     default_args=default_args,
     description="cleaned restaurants comments daily",
-    schedule_interval="0 9 * * *",
+    schedule_interval="0 12 * * *",
     start_date=datetime(2025, 5, 3),
     catchup=False,
     tags=["Step 2 : Data Cleaning"]
 )
-def d_cleaned_comments():
+def d_02_cleaned_comments():
     df = e_load_raw_data()
     df = t_get_user_id(df)
     df = t_is_localguide(df)
@@ -49,4 +49,4 @@ def d_cleaned_comments():
     l_save_cleaned_comment(df)
 
 
-d_cleaned_comments()
+d_02_cleaned_comments()
