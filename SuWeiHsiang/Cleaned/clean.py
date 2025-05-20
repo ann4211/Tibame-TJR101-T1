@@ -66,66 +66,206 @@ def t_get_user_id(df: DataFrame) -> DataFrame:
     return df
 
 
-def find_city(x: str) -> Tuple[Optional[str], int]:
+def find_city(x: str) -> Tuple[str, int]:
     """
     判斷地址所在之縣市，並回傳所在縣市名稱及縣市名稱相關字詞所在地址字串之位置
     """
     for city in municipality:  # 判斷是否在直轄市
         if city in x:
-            return city, x.find(city)
-    for county in counties:  # 判斷是否在省轄縣市
-        if county in x:
-            return county, x.find(county)
-    return None, -1  # 地址漏填一級行政區
+            city_re = re.search(city, x)
+            city_end = city_re.span()[1]
+            city = city_re.group()
+            return city, city_end
+    for city in counties:  # 判斷是否在省轄縣市
+        if city in x:
+            city_re = re.search(city, x)
+            city_end = city_re.span()[1]
+            city = city_re.group()
+            return city, city_end
+    return "", 0  # 地址漏填一級行政區
 
 
-def find_second_ad_level(x: str) -> Tuple[str, int, int]:
+def find_dist(x: str, city: str, city_end: int) -> Tuple[str, int]:
     """
-    判斷地址所在縣市之鄉鎮市區，並回傳所在縣市名稱、縣市名稱相關字詞在地址字串之位置、鄉鎮市區相關字詞在地址字串之位置
+    判斷地址所在縣市之鄉鎮市區，並回傳鄉鎮市區名稱、鄉鎮市區相關字詞在地址字串之位置
     """
-    city, city_idx = find_city(x)
-    if city in counties:  # 地址位在省轄縣市
-        for level in second_ad_level[:3]:
-            if level in x:
-                return city, city_idx, x.find(level)
-    elif city in municipality:  # 地址位在直轄市
-        return city, city_idx, x.find("區")
-    else:  # 地址漏填縣市
-        for level in second_ad_level:
-            if level in x:
-                return city, city_idx, x.find(level)
-    return city, city_idx, -1  # 地址漏填縣市及鄉鎮市區
-
-
-def get_city_address(x: str) -> Tuple[str, str]:
-    """
-    取得去除第一二級行政區之地址
-    """
-    city, city_idx, second_ad_idx = find_second_ad_level(x)
-    if second_ad_idx + 2 == len(x):  # 地址只填寫縣市及鄉鎮市區
-        return city, re.sub(r"\d", "", x)
-    if (
-        city_idx < second_ad_idx
-    ):  # 地址先填寫縣市在填寫鄉鎮市區(為國人慣用之地址書寫方式)
-        return city, x[second_ad_idx + 1 :]
-    else:  # 地址從號寫到巷弄再到街道路段再到鄉鎮市區及縣市及國家(為外國人慣用之地址書寫方式)
-        if (
-            "太麻里鄉" in x or "那瑪夏區" in x or "三地門鄉" in x or "阿里山鄉" in x
-        ):  # 以上鄉鎮市區為台灣名稱有三個字的鄉鎮市區，其餘名稱皆為兩個字
-            return city, x[: second_ad_idx - 3]
+    if city in municipality:  # 地址在直轄市
+        dist_re = re.match(r"(.*?)區", x[city_end:])
+        if dist_re is not None:
+            dist_end = city_end + dist_re.span()[1]
+            dist = dist_re.group()
         else:
-            if second_ad_idx > -1:
-                return city, x[: second_ad_idx - 2]
-            else:  # 漏填鄉鎮市區
-                return city, x[city_idx + 3 :]
+            dist_end = city_end
+            dist = ""
+    elif city in counties:  # 地址在省轄市
+        dist_re = re.match(r"(.*?)[鄉鎮市]", x[city_end:])
+        if dist_re is not None:
+            dist_end = city_end + dist_re.span()[1]
+            dist = dist_re.group()
+        else:
+            dist_end = city_end
+            dist = ""
+    else:  # 不知道地址位在哪個縣市
+        dist_re = re.match(r"(.*?)[鄉鎮市區]", x[city_end:])
+        if dist_re is not None:
+            dist_end = city_end + dist_re.span()[1]
+            dist = dist_re.group()
+        else:
+            dist_end = city_end
+            dist = ""
+    return dist, dist_end
+
+
+def taiwan_address(x: str, city: str, dist: str, dist_end: int) -> Tuple[str, str]:
+    """
+    地址書寫方式為國人慣用之書寫方式
+    """
+    road_re = re.match(r"(.*?)[路街]", x[dist_end:])
+    if road_re is not None:
+        road_end = dist_end + road_re.span()[1]
+        road = road_re.group()
+    else:
+        road_end = dist_end
+        road = ""
+
+    sec_re = re.match(r"(.*?)段", x[road_end:])
+    if sec_re is not None:
+        sec_end = road_end + sec_re.span()[1]
+        sec = sec_re.group()
+    else:
+        sec_end = road_end
+        sec = ""
+
+    lane_re = re.match(r"(.*?)巷", x[sec_end:])
+    if lane_re is not None:
+        lane_end = sec_end + lane_re.span()[1]
+        lane = lane_re.group()
+    else:
+        lane_end = sec_end
+        lane = ""
+
+    alley_re = re.match(r"(.*?)弄", x[lane_end:])
+    if alley_re is not None:
+        alley_end = lane_end + alley_re.span()[1]
+        alley = alley_re.group()
+    else:
+        alley_end = lane_end
+        alley = ""
+
+    no_re = re.match(r"(.*?)號", x[alley_end:])
+    if no_re is not None:
+        no_end = alley_end + no_re.span()[1]
+        no = no_re.group()
+    else:
+        no_end = alley_end
+        no = ""
+
+    no2_re = re.match(r"(.*?)號", x[no_end:])
+    if no2_re is not None:
+        no2_end = no_end + no2_re.span()[1]
+        no2 = no2_re.group()
+    else:
+        no2_end = no_end
+        no2 = ""
+
+    address = dist + road + sec + lane + alley + no + no2 + x[no2_end:]
+    return city, address
+
+
+def west_address(x: str, city: str, city_end: int) -> Tuple[str, str]:
+    """
+    地址書寫方式為西方人慣用之書寫方式
+    """
+    no2_re = re.match(r"(.*?)號", x)
+    if no2_re is not None:
+        no2_end = no2_re.span()[1]
+        no2 = no2_re.group()
+    else:
+        no2_end = 0
+        no2 = ""
+
+    no_re = re.match(r"(.*?)號", x[no2_end:])
+    if no_re is not None:
+        no_end = no2_end + no_re.span()[1]
+        no = no_re.group()
+    else:
+        no_end = no2_end
+        no = ""
+
+    alley_re = re.match(r"(.*?)弄", x[no_end:])
+    if alley_re is not None:
+        alley_end = no_end + alley_re.span()[1]
+        alley = alley_re.group()
+    else:
+        alley_end = no_end
+        alley = ""
+
+    lane_re = re.match(r"(.*?)巷", x[alley_end:])
+    if lane_re is not None:
+        lane_end = alley_end + lane_re.span()[1]
+        lane = lane_re.group()
+    else:
+        lane_end = alley_end
+        lane = ""
+
+    sec_re = re.match(r"(.*?)段", x[lane_end:])
+    if sec_re is not None:
+        sec_end = lane_end + sec_re.span()[1]
+        sec = sec_re.group()
+    else:
+        sec_end = lane_end
+        sec = ""
+
+    road_re = re.match(r"(.*?)[路街]", x[sec_end:])
+    if road_re is not None:
+        road_end = sec_end + road_re.span()[1]
+        road = road_re.group()
+    else:
+        road_end = sec_end
+        road = ""
+
+    if city in municipality:
+        dist_re = re.match(r"(.*?)區", x[road_end:city_end])
+        if dist_re is not None:
+            dist = dist_re.group()
+        else:
+            dist = ""
+    elif city in counties:
+        dist_re = re.match(r"(.*?)[鄉鎮市]", x[road_end:city_end])
+        if dist_re is not None:
+            dist = dist_re.group()
+        else:
+            dist = ""
+    else:
+        dist_re = re.match(r"(.*?)[鄉鎮市區]", x[road_end:city_end])
+        if dist_re is not None:
+            dist = dist_re.group()
+        else:
+            dist = ""
+
+    address = dist + road + sec + lane + alley + no + no2 + x[0:no2_end]
+    return city, address
+
+
+def get_address(a: str) -> Tuple[str, str]:
+    """
+    依照地址書寫方式型態轉換為國人慣用之書寫型態
+    """
+    city, city_end = find_city(a)
+    dist, dist_end = find_dist(a, city, city_end)
+
+    if city_end < dist_end:  # 國人慣用之地址書寫方式為先寫一級行政區再寫二級行政區
+        return taiwan_address(a, city, dist, dist_end)
+    else:  # 西方人慣用之地址書寫方式為先寫二級行政區再寫一級行政區
+        return west_address(a, city, city_end)
 
 
 def t_clean_address(df: DataFrame) -> DataFrame:
     """
-    清理地址資料，插入所在縣市之欄位，並去除地址之第一二級行政區
+    清理地址資料，插入所在縣市之欄位
     """
     df.insert(1, "nm_city", "")
-    df[["nm_city", "st_address"]] = df["st_address"].apply(get_city_address).apply(pd.Series)
+    df[["nm_city", "st_address"]] = df["st_address"].apply(get_address).apply(pd.Series)
     return df
 
 
