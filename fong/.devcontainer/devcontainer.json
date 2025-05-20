@@ -1,0 +1,54 @@
+{
+    "build": {
+      "dockerfile": "../Dockerfile"
+    },
+    "customizations": {
+      "vscode": {
+        "extensions": [
+          "donjayamanne.githistory",
+          "eamodio.gitlens",
+          "mhutchie.git-graph",
+          "shinichi-takii.sql-bigquery",
+          "vivaxy.vscode-conventional-commits",
+          "ms-python.python",
+          "ms-python.black-formatter",
+          "ms-python.isort",
+          "ms-toolsai.jupyter",
+          "mechatroner.rainbow-csv",
+          "ms-python.autopep8",
+          "cweijan.vscode-database-client2",
+          "ms-azuretools.vscode-docker"
+        ],
+        "settings": {
+          "terminal.integrated.defaultProfile.linux": "zsh",
+          "editor.defaultFormatter": "ms-python.black-formatter",
+          "editor.tabSize": 4,
+          "editor.rulers": [
+            100
+          ],
+          "[python]": {
+            "python.formatting.provider": "black",
+            "editor.codeActionsOnSave": {
+              "editor.formatOnSave": "always",
+              "source.unusedImports": "never",
+              "source.organizeImports": "always"
+            }
+          }
+        }
+      }
+    },
+    // "mounts": [
+    //   "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/root/.ssh_mounted,type=bind,consistency=cached",
+    //   "source=${localEnv:HOME}${localEnv:USERPROFILE}/.gitconfig,target=/root/.gitconfig_mounted,type=bind,consistency=cached"
+    // ],
+    "remoteEnv": {
+      "PYTHONPATH": "/workspaces/demo-devcontainer/src"
+    },
+    "postCreateCommand": "sh ./.devcontainer/postCreateCommand.sh",
+    "runArgs": [
+      "--name",
+      "poetry-demo-test2",
+      "--network",
+      "host"
+    ]
+  }

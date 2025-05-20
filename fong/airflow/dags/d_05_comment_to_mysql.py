@@ -1,0 +1,29 @@
+from airflow.decorators import dag
+from datetime import datetime, timedelta
+from tasks.send_comment_to_mysql import send_comment_to_mysql
+
+
+default_args = {
+    "owner": "airflow",
+    "depends_on_past": False,
+    "email": ["your_email@example.com"],
+    "email_on_failure": False,
+    "email_on_retry": False,
+    "retries": 1,
+    "retry_delay": timedelta(minutes=5),
+}
+
+@dag(
+    dag_id="d_05_comment_to_mysql",
+    default_args=default_args,
+    description="put new comment to mysql",
+    schedule_interval="0 15 * * *",
+    start_date=datetime(2025,5,20),
+    catchup=False,
+    tags=["step 5 : add new comment today"]
+)
+
+def comment_to_mysql():
+    send_comment_to_mysql()
+    
+comment_to_mysql()
