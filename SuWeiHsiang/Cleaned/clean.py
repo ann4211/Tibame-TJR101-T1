@@ -116,7 +116,9 @@ def find_dist(x: str, city: str, city_end: int) -> Tuple[str, int]:
     return dist, dist_end
 
 
-def taiwan_address(x: str, city: str, dist: str, dist_end: int) -> Tuple[str, str,bool]:
+def taiwan_address(
+    x: str, city: str, dist: str, dist_end: int
+) -> Tuple[str, str, bool]:
     """
     地址書寫方式為國人慣用之書寫方式
     """
@@ -167,15 +169,17 @@ def taiwan_address(x: str, city: str, dist: str, dist_end: int) -> Tuple[str, st
     else:
         no2_end = no_end
         no2 = ""
-    
-    is_taiwan_address = True#確認是否真為台灣慣用地址格式
-    if dist == "" and re.sub(r"\d+","",x[no2_end]) == "":#如果沒有獲得二級行政區且未有任何備註性質之文字，則視為非台灣慣用之地址格式
+
+    is_taiwan_address = True  # 確認是否真為台灣慣用地址格式
+    if (
+        dist == "" and re.sub(r"\d+", "", x[no2_end]) == ""
+    ):  # 如果沒有獲得二級行政區且未有任何備註性質之文字，則視為非台灣慣用之地址格式
         is_taiwan_address = False
         address = ""
-        return city,address,is_taiwan_address
+        return city, address, is_taiwan_address
 
     address = dist + road + sec + lane + alley + no + no2 + x[no2_end:]
-    return city, address,is_taiwan_address
+    return city, address, is_taiwan_address
 
 
 def west_address(x: str, city: str, city_end: int) -> Tuple[str, str]:
@@ -261,11 +265,11 @@ def get_address(x: str) -> Tuple[str, str]:
     dist, dist_end = find_dist(x, city, city_end)
 
     if city_end <= dist_end:  # 國人慣用之地址書寫方式為先寫一級行政區再寫二級行政區
-        city,address,is_taiwan_address =  taiwan_address(x,city,dist,dist_end)
+        city, address, is_taiwan_address = taiwan_address(x, city, dist, dist_end)
         if is_taiwan_address:
-            return city,address
+            return city, address
         else:
-            return west_address(x,city,city_end)
+            return west_address(x, city, city_end)
     else:  # 西方人慣用之地址書寫方式為先寫二級行政區再寫一級行政區
         return west_address(x, city, city_end)
 
