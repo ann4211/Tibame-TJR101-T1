@@ -97,7 +97,7 @@ def find_dist(x: str, city: str, city_end: int) -> Tuple[str, int]:
         else:
             dist_end = city_end
             dist = ""
-    elif city in counties:  # 地址在省轄市
+    elif city in counties:  # 地址在省轄縣市
         dist_re = re.match(r"(.*?)[鄉鎮市]", x[city_end:])
         if dist_re is not None:
             dist_end = city_end + dist_re.span()[1]
@@ -116,7 +116,7 @@ def find_dist(x: str, city: str, city_end: int) -> Tuple[str, int]:
     return dist, dist_end
 
 
-def taiwan_address(x: str, city: str, dist: str, dist_end: int) -> Tuple[str, str]:
+def taiwan_address(x: str, city: str, dist: str, dist_end: int) -> Tuple[str, str,bool]:
     """
     地址書寫方式為國人慣用之書寫方式
     """
@@ -167,37 +167,43 @@ def taiwan_address(x: str, city: str, dist: str, dist_end: int) -> Tuple[str, st
     else:
         no2_end = no_end
         no2 = ""
+    
+    is_taiwan_address = True#確認是否真為台灣慣用地址格式
+    if dist == "" and re.sub(r"\d+","",x[no2_end]) == "":#如果沒有獲得二級行政區且未有任何備註性質之文字，則視為非台灣慣用之地址格式
+        is_taiwan_address = False
+        address = ""
+        return city,address,is_taiwan_address
 
     address = dist + road + sec + lane + alley + no + no2 + x[no2_end:]
-    return city, address
+    return city, address,is_taiwan_address
 
 
 def west_address(x: str, city: str, city_end: int) -> Tuple[str, str]:
     """
     地址書寫方式為西方人慣用之書寫方式
     """
-    no2_re = re.match(r"(.*?)號", x)
-    if no2_re is not None:
-        no2_end = no2_re.span()[1]
-        no2 = no2_re.group()
-    else:
-        no2_end = 0
-        no2 = ""
-
-    no_re = re.match(r"(.*?)號", x[no2_end:])
+    no_re = re.match(r"(.*?)號", x)
     if no_re is not None:
-        no_end = no2_end + no_re.span()[1]
+        no_end = no_re.span()[1]
         no = no_re.group()
     else:
-        no_end = no2_end
+        no_end = 0
         no = ""
 
-    alley_re = re.match(r"(.*?)弄", x[no_end:])
+    no2_re = re.match(r"(.*?)號", x[no_end:])
+    if no2_re is not None:
+        no2_end = no_end + no_re.span()[1]
+        no2 = no2_re.group()
+    else:
+        no2_end = no_end
+        no2 = ""
+
+    alley_re = re.match(r"(.*?)弄", x[no2_end:])
     if alley_re is not None:
-        alley_end = no_end + alley_re.span()[1]
+        alley_end = no2_end + alley_re.span()[1]
         alley = alley_re.group()
     else:
-        alley_end = no_end
+        alley_end = no2_end
         alley = ""
 
     lane_re = re.match(r"(.*?)巷", x[alley_end:])
@@ -243,21 +249,25 @@ def west_address(x: str, city: str, city_end: int) -> Tuple[str, str]:
         else:
             dist = ""
 
-    address = dist + road + sec + lane + alley + no + no2 + x[0:no2_end]
+    address = dist + road + sec + lane + alley + no + no2
     return city, address
 
 
-def get_address(a: str) -> Tuple[str, str]:
+def get_address(x: str) -> Tuple[str, str]:
     """
     依照地址書寫方式型態轉換為國人慣用之書寫型態
     """
-    city, city_end = find_city(a)
-    dist, dist_end = find_dist(a, city, city_end)
+    city, city_end = find_city(x)
+    dist, dist_end = find_dist(x, city, city_end)
 
-    if city_end < dist_end:  # 國人慣用之地址書寫方式為先寫一級行政區再寫二級行政區
-        return taiwan_address(a, city, dist, dist_end)
+    if city_end <= dist_end:  # 國人慣用之地址書寫方式為先寫一級行政區再寫二級行政區
+        city,address,is_taiwan_address =  taiwan_address(x,city,dist,dist_end)
+        if is_taiwan_address:
+            return city,address
+        else:
+            return west_address(x,city,city_end)
     else:  # 西方人慣用之地址書寫方式為先寫二級行政區再寫一級行政區
-        return west_address(a, city, city_end)
+        return west_address(x, city, city_end)
 
 
 def t_clean_address(df: DataFrame) -> DataFrame:
