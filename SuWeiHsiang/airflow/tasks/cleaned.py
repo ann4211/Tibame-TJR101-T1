@@ -119,13 +119,23 @@ def t_adjust_columns(df: DataFrame) -> DataFrame:
     df_comment.drop_duplicates(
         subset=["nm_name", "st_name", "user_name", "user_id"], keep="last", inplace=True
     )
-    df_comment["rating_star"] = pd.to_numeric(df_comment["rating_star"], errors="coerce")
-    df_comment["review_count"] = pd.to_numeric(df_comment["review_count"], errors="coerce")
-    df_comment["photo_count"] = pd.to_numeric(df_comment["photo_count"], errors="coerce")
+    df_comment["rating_star"] = pd.to_numeric(
+        df_comment["rating_star"], errors="coerce"
+    )
+    df_comment["review_count"] = pd.to_numeric(
+        df_comment["review_count"], errors="coerce"
+    )
+    df_comment["photo_count"] = pd.to_numeric(
+        df_comment["photo_count"], errors="coerce"
+    )
     df_comment["time_num"] = pd.to_numeric(df_comment["time_num"], errors="coerce")
     df_comment["months_ago"] = pd.to_numeric(df_comment["months_ago"], errors="coerce")
-    df_comment["create_date"] = pd.to_datetime(df_comment["create_date"], errors="coerce")
-    df_comment["update_date"] = pd.to_datetime(df_comment["update_date"], errors="coerce")
+    df_comment["create_date"] = pd.to_datetime(
+        df_comment["create_date"], errors="coerce"
+    )
+    df_comment["update_date"] = pd.to_datetime(
+        df_comment["update_date"], errors="coerce"
+    )
     return df_comment
 
 
@@ -136,9 +146,7 @@ def t_update_months_ago(df: DataFrame) -> DataFrame:
     """
     df["months_ago"] = (
         df["months_ago"]
-        + (
-            pd.to_datetime(date.today()) - pd.to_datetime(df["update_date"])
-        ).dt.days
+        + (pd.to_datetime(date.today()) - pd.to_datetime(df["update_date"])).dt.days
         / 30
     )
     df["update_date"] = date.today()
