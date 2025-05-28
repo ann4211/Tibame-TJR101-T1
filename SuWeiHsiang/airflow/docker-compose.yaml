@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: airflow_standalone
+    container_name: airflow_service
     environment:
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@airflow_postgres:5432/airflow
@@ -19,7 +19,7 @@ services:
         airflow db init &&
         airflow users create --username airflow --password airflow --firstname airflow --lastname airflow --role Admin --email your_email@example.com &&
         airflow scheduler &
-        airflow webserver
+        sleep 10 && airflow webserver
       "
     volumes:
       - ./dags:/opt/airflow/dags
@@ -27,6 +27,12 @@ services:
       - ./utils:/opt/airflow/utils
       - ./tasks:/opt/airflow/tasks
       - ./data:/opt/airflow/data
+    healthcheck:
+      test: ["CMD","curl","--fail","http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
   
   postgres:
     image: postgres:13
@@ -39,3 +45,8 @@ services:
       - "5432:5432"
     volumes:
       - ./pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD","pg_isready","-U","airflow"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
